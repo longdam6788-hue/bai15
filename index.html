@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Lab 15: Kiểm tra Biểu Mẫu Đăng Ký với jQuery</title>
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+        /* === Giao diện tổng quan sang trọng, hiện đại === */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .form-container {
+            background: #ffffff;
+            padding: 35px 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .form-container h2 {
+            margin: 0 0 10px 0;
+            color: #111827;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .form-container p.subtitle {
+            margin: 0 0 30px 0;
+            color: #6b7280;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* === Cấu trúc các ô nhập liệu (Form Groups) === */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.25s ease;
+        }
+
+        /* Trạng thái focus mặc định */
+        .form-group input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* === Yêu cầu mở rộng: Màu viền Hợp lệ / Không hợp lệ === */
+        .form-group input.is-valid {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2310b981'%3E%3Cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+        }
+
+        .form-group input.is-invalid {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ef4444'%3E%3Cpath fill-rule='evenodd' d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+        }
+
+        /* Nơi hiển thị lỗi ngay dưới ô nhập liệu */
+        .error-message {
+            color: #ef4444;
+            font-size: 12.5px;
+            margin-top: 5px;
+            font-weight: 500;
+            display: none; /* Ẩn mặc định */
+        }
+
+        /* === Nút Gửi Form === */
+        button[type="submit"] {
+            width: 100%;
+            padding: 13px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Thông báo tổng khi submit thành công */
+        #success-alert {
+            display: none;
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div id="success-alert">🎉 Đăng ký tài khoản thành công!</div>
+
+        <h2>Tạo Tài Khoản</h2>
+        <p class="subtitle">Vui lòng điền đầy đủ các thông tin bên dưới</p>
+
+        <form id="registerForm" novalidate>
+            <div class="form-group">
+                <label for="fullname">Họ và tên</label>
+                <input type="text" id="fullname" placeholder="Nguyễn Văn A">
+                <div class="error-message" id="error-fullname">Họ tên không được để trống.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Địa chỉ Email</label>
+                <input type="email" id="email" placeholder="example@gmail.com">
+                <div class="error-message" id="error-email">Email không hợp lệ.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Số điện thoại (Mở rộng)</label>
+                <input type="tel" id="phone" placeholder="0912345678">
+                <div class="error-message" id="error-phone">Số điện thoại phải gồm 10 chữ số đầu 0.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" placeholder="Tối thiểu 6 ký tự">
+                <div class="error-message" id="error-password">Mật khẩu phải từ 6 ký tự trở lên.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm-password">Xác nhận mật khẩu</label>
+                <input type="password" id="confirm-password" placeholder="Nhập lại mật khẩu">
+                <div class="error-message" id="error-confirm-password">Mật khẩu xác nhận không trùng khớp.</div>
+            </div>
+
+            <button type="submit">Đăng Ký Ngay</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+
+            // Biểu thức chính quy (Regex) để kiểm tra Email & Số điện thoại
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/; // Đầu số VN 10 số
+
+            // Hàm kiểm tra chung cho từng trường (Dùng chung cho cả lúc Gửi form và lúc người dùng đang gõ)
+            function validateField(inputElement, condition, errorSelector) {
+                const value = inputElement.val().trim();
+                
+                if (condition(value)) {
+                    // Nếu hợp lệ: Thêm class valid, xóa class invalid, ẩn lỗi
+                    inputElement.addClass('is-valid').removeClass('is-invalid');
+                    $(errorSelector).fadeOut(150);
+                    return true;
+                } else {
+                    // Nếu lỗi: Thêm class invalid, xóa class valid, hiện lỗi mượt
+                    inputElement.addClass('is-invalid').removeClass('is-valid');
+                    $(errorSelector).fadeIn(150);
+                    return false;
+                }
+            }
+
+            // === TÍNH NĂNG MỞ RỘNG: Kiểm tra Real-time khi người dùng gõ/rời ô nhập (input/blur) ===
+            $('#fullname').on('input blur', function() {
+                validateField($(this), value => value !== "", '#error-fullname');
+            });
+
+            $('#email').on('input blur', function() {
+                validateField($(this), value => emailRegex.test(value), '#error-email');
+            });
+
+            $('#phone').on('input blur', function() {
+                validateField($(this), value => phoneRegex.test(value), '#error-phone');
+            });
+
+            $('#password').on('input blur', function() {
+                validateField($(this), value => value.length >= 6, '#error-password');
+                // Nếu ô xác nhận mật khẩu đã có chữ, check lại luôn tính trùng khớp
+                if ($('#confirm-password').val().length > 0) {
+                    $('#confirm-password').trigger('input');
+                }
+            });
+
+            $('#confirm-password').on('input blur', function() {
+                const pass = $('#password').val().trim();
+                validateField($(this), value => value === pass && value !== "", '#error-confirm-password');
+            });
+
+
+            // === XỬ LÝ SỰ KIỆN SUBMIT FORM ===
+            $('#registerForm').on('submit', function(event) {
+                // 1. Chặn hành vi tải lại trang mặc định của form
+                event.preventDefault();
+
+                // 2. Kích hoạt kiểm tra tất cả các trường
+                const isNameValid = validateField($('#fullname'), value => value !== "", '#error-fullname');
+                const isEmailValid = validateField($('#email'), value => emailRegex.test(value), '#error-email');
+                const isPhoneValid = validateField($('#phone'), value => phoneRegex.test(value), '#error-phone');
+                const isPasswordValid = validateField($('#password'), value => value.length >= 6, '#error-password');
+                
+                const passVal = $('#password').val().trim();
+                const isConfirmValid = validateField($('#confirm-password'), value => value === passVal && value !== "", '#error-confirm-password');
+
+                // 3. Nếu tất cả các trường đều hợp lệ
+                if (isNameValid && isEmailValid && isPhoneValid && isPasswordValid && isConfirmValid) {
+                    // Ẩn form mượt mà
+                    $('#registerForm').slideUp(400);
+                    // Hiển thị bảng thông báo thành công rực rỡ
+                    $('#success-alert').slideDown(400);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
